@@ -1,0 +1,6 @@
+{
+  "name": "Neo Transport - Collection Note Editor",
+  "description": "Enterprise-grade PDF Collection Note Editor and dispatch document processor for Neo Transport logistics fleet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

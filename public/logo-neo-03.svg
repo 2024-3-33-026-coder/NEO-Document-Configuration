@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 80" fill="none">
+  <!-- Exact Isometric Hexagon 'N' Emblem from logo neo-03.png -->
+  <g transform="translate(10, 5) scale(0.7)">
+    <polygon points="12,43 12,70 50,92 72,79.3 72,47 44,63.2 44,24.5" fill="#258CFB" />
+    <polygon points="88,57 88,30 50,8 28,20.7 28,53 56,36.8 56,75.5" fill="#258CFB" />
+  </g>
+  <!-- Pure White NEO TRANSPORT Wordmark -->
+  <text x="95" y="52" fill="#FFFFFF" font-family="'Rajdhani', 'Plus Jakarta Sans', system-ui, sans-serif" font-size="40" font-weight="700" letter-spacing="2.5">NEO TRANSPORT</text>
+</svg>

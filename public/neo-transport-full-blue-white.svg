@@ -1,0 +1,22 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1310.75 191.82">
+  <defs>
+    <style>
+      .cls-1 { letter-spacing: 0em; }
+      .cls-2 { fill: #3898ec; }
+      .cls-3 { fill: #fff; font-family: 'Rajdhani', 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 147.43px; font-weight: 700; }
+      .cls-4 { letter-spacing: 0em; }
+    </style>
+  </defs>
+  <g>
+    <polygon class="cls-2" points="111.88 69.08 111.88 133.59 133.69 146.54 133.69 146.53 188.72 178.97 267.04 133.59 267.04 57.09 155.16 122.74 155.16 58.23 133.35 45.28 133.35 45.29 78.32 12.85 0 58.23 0 134.73 111.88 69.08"/>
+    <polygon class="cls-2" points="89.22 108.76 12.91 153.86 78.03 191.82 122.21 166.13 88.65 146.43 89.22 108.76"/>
+    <polygon class="cls-2" points="177.82 83.06 254.13 37.96 189.01 0 144.83 25.69 178.39 45.39 177.82 83.06"/>
+  </g>
+  <text class="cls-3" transform="translate(294.4 146.51)">
+    <tspan x="0" y="0">NEO T</tspan>
+    <tspan class="cls-1" x="350.72" y="0">R</tspan>
+    <tspan x="435.05" y="0">ANSPO</tspan>
+    <tspan class="cls-4" x="862.14" y="0">R</tspan>
+    <tspan x="946.46" y="0">T</tspan>
+  </text>
+</svg>
