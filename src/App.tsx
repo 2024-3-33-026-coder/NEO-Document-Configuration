@@ -441,18 +441,25 @@ export default function App() {
         color: textColor,
       });
 
-      // Save PDF and create clean Blob URL and bytes
+      // Save PDF and create clean independent bytes
       const pdfBytesData = await pdfDoc.save();
-      const generatedBytes = new Uint8Array(pdfBytesData);
+      const cleanBuffer = pdfBytesData.buffer.slice(
+        pdfBytesData.byteOffset,
+        pdfBytesData.byteOffset + pdfBytesData.byteLength
+      ) as ArrayBuffer;
+      const generatedBytes = new Uint8Array(cleanBuffer);
       setPdfBytes(generatedBytes);
 
-      const blob = new Blob([pdfBytesData.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const sizeKb = (generatedBytes.byteLength / 1024).toFixed(1);
+      setFileSize(`${sizeKb} KB`);
+
+      const blob = new Blob([cleanBuffer], { type: 'application/pdf' });
       const finalUrl = URL.createObjectURL(blob);
 
       setGeneratedBlobUrl(finalUrl);
       setPreviewUrl(finalUrl);
       setIsGenerated(true);
-      showToast('Collection Note generated successfully!');
+      showToast(`Collection Note generated (${sizeKb} KB) - Ready to download!`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       showToast('Failed to process PDF. Please check coordinates and document format.');
@@ -697,7 +704,8 @@ export default function App() {
     async function renderPdfToCanvas(bytes) {
       try {
         if (!window.pdfjsLib) return;
-        const loadingTask = pdfjsLib.getDocument({ data: bytes });
+        const bytesClone = bytes.slice();
+        const loadingTask = pdfjsLib.getDocument({ data: bytesClone });
         const pdf = await loadingTask.promise;
         const page = await pdf.getPage(1);
         
@@ -807,14 +815,21 @@ export default function App() {
         const pdfBytes = await pdfDoc.save();
         currentPdfBytes = pdfBytes;
         
-        renderPdfToCanvas(pdfBytes);
-
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        // 1. Create clean independent Blob for instant reliable download
+        const cleanBuffer = pdfBytes.buffer.slice(
+          pdfBytes.byteOffset,
+          pdfBytes.byteOffset + pdfBytes.byteLength
+        );
+        const blob = new Blob([cleanBuffer], { type: 'application/pdf' });
         const pdfUrl = URL.createObjectURL(blob);
 
+        const baseName = (file ? file.name : 'Collection_Note').replace(/\\.pdf$/i, '');
         downloadBtn.href = pdfUrl;
-        downloadBtn.download = \`Completed_\${file ? file.name : 'Collection_Note.pdf'}\`;
+        downloadBtn.download = \`Completed_\${baseName}.pdf\`;
         downloadBtn.classList.remove('hidden');
+
+        // 2. Render preview to canvas using cloned bytes
+        renderPdfToCanvas(pdfBytes);
 
         processBtn.innerHTML = originalText;
         processBtn.disabled = false;

@@ -75,6 +75,7 @@ export const CanvasPdfViewer: React.FC<CanvasPdfViewerProps> = ({
   const [showCoordsOverlay, setShowCoordsOverlay] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
   
   // Page natural dimensions (in PDF points, usually 595.28 x 841.89 for A4)
   const [pageNaturalWidth, setPageNaturalWidth] = useState<number>(595.28);
@@ -106,8 +107,10 @@ export const CanvasPdfViewer: React.FC<CanvasPdfViewerProps> = ({
           }
         }
 
+        // CRITICAL: Clone pdfBytes so PDF.js Web Worker transfers the clone, keeping pdfBytes intact
+        const bytesClone = pdfBytes.slice();
         const loadingTask = pdfjsLib.getDocument({
-          data: pdfBytes,
+          data: bytesClone,
           cMapUrl: 'https://unpkg.com/pdfjs-dist@' + pdfjsLib.version + '/cmaps/',
           cMapPacked: true,
         });
@@ -256,26 +259,62 @@ export const CanvasPdfViewer: React.FC<CanvasPdfViewerProps> = ({
     setFitMode('fit-width');
   };
 
+  // Helper to extract clean non-detached bytes into a valid PDF Blob
+  const createSafePdfBlob = (bytes: Uint8Array): Blob => {
+    // Slice the exact byte region into a fresh independent ArrayBuffer
+    const bufferCopy = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength
+    ) as ArrayBuffer;
+    return new Blob([bufferCopy], { type: 'application/pdf' });
+  };
+
   // Download PDF
   const handleDownload = () => {
-    if (!pdfBytes) return;
-    const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+    if (!pdfBytes || pdfBytes.byteLength === 0) {
+      alert('No document data available to download.');
+      return;
+    }
+    const blob = createSafePdfBlob(pdfBytes);
+    if (blob.size === 0) {
+      alert('Warning: Generated PDF has 0 bytes. Please click "Generate Collection Note" again.');
+      return;
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
-    a.download = isGenerated ? `Completed_${fileName || 'Collection_Note.pdf'}` : fileName || 'Document.pdf';
+    const baseName = fileName ? fileName.replace(/\.pdf$/i, '') : 'Collection_Note';
+    const downloadName = isGenerated
+      ? `Completed_${baseName}.pdf`
+      : `${baseName}.pdf`;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    const sizeKb = (blob.size / 1024).toFixed(1);
+    setDownloadSuccess(`Downloaded (${sizeKb} KB)`);
+    setTimeout(() => setDownloadSuccess(null), 3500);
+
+    // Keep object URL active for 10 seconds so the browser can finish writing the file to disk
+    setTimeout(() => {
+      if (document.body.contains(a)) {
+        document.body.removeChild(a);
+      }
+      URL.revokeObjectURL(url);
+    }, 10000);
   };
 
   // Open in new window
   const handleOpenNewWindow = () => {
-    if (!pdfBytes) return;
-    const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+    if (!pdfBytes || pdfBytes.byteLength === 0) return;
+    const blob = createSafePdfBlob(pdfBytes);
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 60000);
   };
 
   // Compute screen pixel position for a PDF point coordinate on Page 1
@@ -392,11 +431,17 @@ export const CanvasPdfViewer: React.FC<CanvasPdfViewerProps> = ({
               {/* Download Action */}
               <button
                 onClick={handleDownload}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer ${
+                  downloadSuccess
+                    ? 'bg-cyan-600 shadow-cyan-600/30'
+                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
+                }`}
                 title="Download PDF"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Download</span>
+                <span>
+                  {downloadSuccess || (isGenerated ? 'Download Completed PDF' : 'Download PDF')}
+                </span>
               </button>
 
               {/* Open in new window */}

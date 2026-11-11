@@ -251,7 +251,8 @@
     async function renderPdfToCanvas(bytes) {
       try {
         if (!window.pdfjsLib) return;
-        const loadingTask = pdfjsLib.getDocument({ data: bytes });
+        const bytesClone = bytes.slice();
+        const loadingTask = pdfjsLib.getDocument({ data: bytesClone });
         const pdf = await loadingTask.promise;
         const page = await pdf.getPage(1);
         
@@ -403,14 +404,21 @@
         const pdfBytes = await pdfDoc.save();
         currentPdfBytes = pdfBytes;
         
-        renderPdfToCanvas(pdfBytes);
-
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        // 1. Create clean independent Blob for instant reliable download
+        const cleanBuffer = pdfBytes.buffer.slice(
+          pdfBytes.byteOffset,
+          pdfBytes.byteOffset + pdfBytes.byteLength
+        );
+        const blob = new Blob([cleanBuffer], { type: 'application/pdf' });
         const pdfUrl = URL.createObjectURL(blob);
 
+        const baseName = (file ? file.name : 'Collection_Note').replace(/\.pdf$/i, '');
         downloadBtn.href = pdfUrl;
-        downloadBtn.download = `Completed_${file ? file.name : 'Collection_Note.pdf'}`;
+        downloadBtn.download = `Completed_${baseName}.pdf`;
         downloadBtn.classList.remove('hidden');
+
+        // 2. Render preview to canvas (using cloned bytes internally)
+        renderPdfToCanvas(pdfBytes);
 
         processBtn.innerHTML = originalText;
         processBtn.disabled = false;
